@@ -1,0 +1,355 @@
+Kendime notlardır.
+
+1:Homepage sayfasını oluştur
+
+2:class _HomePageState extends State<HomePage> { 
+altında
+
+ toDoList adında bir liste oluştur-------["make tutorial", false],
+
+
+3:void checkBoxChanged(bool? value, int index) adında bir method oluştur
+void checkBoxChanged(bool? value, int index) {
+    setState(() {
+      toDoList[index][1] = !toDoList[index][1];
+    });
+  }
+
+4:body: ListView.builder(
+        itemCount: toDoList.length,
+        itemBuilder: (context, index) {
+          return ToDoTile(
+            taskName: toDoList[index][0],
+            taskCompleted: toDoList[index][1],
+            onChanged: (value) => checkBoxChanged(value, index),
+          );
+
+
+5:ToDoTile stateless oluştur
+
+class ToDoTile extends StatelessWidget {
+  final String taskName;
+  final bool taskCompleted;
+  Function(bool?)? onChanged;
+  ToDoTile(
+      {super.key,
+      required this.taskName,
+      required this.taskCompleted,
+      required this.onChanged});
+
+
+6:floatingActionButton: oluştur
+floatingActionButton: FloatingActionButton(
+        onPressed: createNewTask,
+        child: Icon(Icons.add),
+      ),
+
+
+7:createNewTask adında bir method oluştur
+void createNewTask() {
+    showDialog(
+        context: context,
+        builder: (context) {
+          return DialogBox();
+        });
+
+
+8:DialogBox adında bir stateless widget oluşturup AlertDialogu return ettir. İçinde
+container olsun.containerın içinde column
+ TextField(
+              decoration: InputDecoration(
+                  border: OutlineInputBorder(), hintText: "ADD NEW TASK"),
+            ), 
+ve yine column onun içibde row olsun. Row içinde cancel ve 
+save butonları olsun
+
+Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                MyButton(text: "Delete", onPressed: () {}),
+                MyButton(text: "Save", onPressed: () {})
+              ],
+
+9:  MyButton stateless widgeının oluşturup return olarak   MaterialButton ver
+
+ return MaterialButton(
+      onPressed: onPressed,
+      color: Theme.of(context).primaryColor,
+      child: Text(text),
+    );
+
+
+10: 8. maddede yaptığındın TextField içide controller fieldi oluşturman gerekli
+
+ TextField(
+              controller: controller,
+              decoration: InputDecoration(
+                  border: OutlineInputBorder(), hintText: "add new task"),
+            ),
+
+AYRICA:
+
+class DialogBox extends StatelessWidget {
+  final controller;
+  const DialogBox({super.key, required this.controller});
+
+
+
+ayrıca bu controllerı constructorda kullanmak gerekli. Dialogbox u çağıran controllerı da 
+vermek zorunda
+
+
+11:createNewTask() yeni hali
+class _HomePageState extends State<HomePage> { 
+altında
+
+final _controller = TextEditingController();
+
+
+
+ void createNewTask() {
+    showDialog(
+        context: context,
+        builder: (context) {
+          return DialogBox(
+            controller: _controller,
+          );
+        });
+
+böylece texti homepageden erişeblieceğiz
+
+12: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                MyButton(text: "Cancel", onPressed: onCancel),
+                const SizedBox(
+                  width: 4,
+                ),
+                MyButton(text: "Save", onPressed: onSave)
+              ],
+            )
+
+
+butonlara basınca neyapmamız gerektiğinde sıra
+
+
+
+
+13:şimdi butonlara görev verelbilmek için onları DialogBoxdaki
+contructura ekliyoruz
+
+
+class DialogBox extends StatelessWidget {
+  final controller;
+  VoidCallback onSave;
+  VoidCallback onCancel;
+
+  DialogBox(
+      {super.key,
+      required this.controller,
+      required this.onSave,
+      required this.onCancel});
+
+
+14:Homepagede Dialogboxun içindeki 
+
+void createNewTask() {
+    showDialog(
+        context: context,
+        builder: (context) {
+          return DialogBox(
+            controller: _controller,
+	     onSave: saveNewTask,
+	     onCancel:() => Navigator.of(context).pop(),
+          );
+        });
+
+ onCancel:() => Navigator.of(context).pop, ifadesindeki 
+
+Navigator.of(context).pop() geri git anlamındadır
+
+
+
+15:saveNewTask()  methodunu olşurmak gerekli
+
+ void saveNewTask() {
+    setState(() {
+      toDoList.add([_controller.text, false]); //default false gelir
+      _controller.clear();
+    });
+
+    Navigator.of(context).pop();
+  }
+
+
+bu şekil. 
+ Navigator.of(context).pop(); işlemden sonra ekranın kapanması için
+ _controller.clear(); ise yazılanı işlem bittikden sonra silmek için 
+() parantezleri unutursan sistem çalışmaz
+
+
+16:Şimdi yapılan işleri silmek için bir moduül ekleyeceğiz
+bu slidable olacak.
+pubspec yaml da
+cupertino_icons altına alttaki ni yaz
+  flutter_slidable: ^2.0.0
+yaz
+
+17: Todotile gel. Slidable ile containerı childa al
+
+child: Slidable(
+        endActionPane: ActionPane(motion: StretchMotion(), children: [
+          SlidableAction(
+            onPressed: deleteFunction,
+            icon: Icons.delete,
+          )
+        ]),
+        child: Container(
+
+20:  onPressed: deleteFunction, deki deletefunctionu oluşturalım şimdi
+bu yüzden ToDoTile içinde constructra alalım
+
+class ToDoTile extends StatelessWidget {
+  final String taskName;
+  final bool taskCompleted;
+  Function(bool?)? onChanged;
+  Function(BuildContext)? deleteFunction;
+  ToDoTile(
+      {super.key,
+      required this.taskName,
+      required this.taskCompleted,
+      required this.onChanged,
+      required this.deleteFunction});
+
+21: şimdi homepagede onu içeri sokalım
+
+
+22:
+ body: ListView.builder(
+        itemCount: toDoList.length,
+        itemBuilder: (context, index) {
+          return ToDoTile(
+            taskName: toDoList[index][0],
+            taskCompleted: toDoList[index][1],
+            onChanged: (value) => checkBoxChanged(value, index),
+            deleteFunction: (context) => deleteTask(index),
+          );
+
+
+23:deleteFunction: (context) => deleteTask(index),
+deletefunction bizim constrructurdaki eleman. şimdi
+ deleteTask(index) methodunu oluşturalım.  deleteTask(index) parentez 
+içni unutma
+
+24:  
+void deleteTask(int index) {
+    setState(() {
+      toDoList.removeAt(index);
+    });
+  }
+
+
+25: şimdi memorye kazımak için 
+pubspec.yaml da
+önce 
+
+dependencies:
+  flutter:
+    sdk: flutter
+    
+  hive: ^2.2.3
+  hive_flutter: ^1.10
+hive ları ekleyelim
+
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  hive_generator: ^1.1.3
+  build_runner: ^2.1.11
+
+hem dependencies hem de dev_dependencies 
+bunlarıları ekleyelim
+
+26: main e onu async yap ve box oluştur.
+void main() async{
+
+
+  await Hive.initFlutter();
+  
+  //open a box
+  var box=await Hive.openBox("mybox");
+
+
+
+  runApp(const MyApp());
+}
+
+
+27:
+HOMEPAGE e gel
+
+class _HomePageState extends State<HomePage> {
+  //reference hivebox
+  final _mybox = Hive.box("mybox");
+
+  final _controller = TextEditingController();
+
+  ToDoDataBase db = ToDoDataBase();
+
+
+
+28:lib dosyasında data klasoru oluştur. onun içinde database classı. 
+import 'package:hive/hive.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+
+class ToDoDataBase {
+  //reference our box
+
+  List toDoList = [];
+
+  final _myBox = Hive.box("mybox");
+
+  //it runs if the program 1st time over opening
+  void createIitialData() {
+    toDoList = [
+      ["read book", false],
+      ["do exercise", true]
+    ];
+  }
+
+  void loadData() {
+    toDoList = _myBox.get("TODOLIST");
+  }
+
+  void updateDateBase() {
+    _myBox.put("TODOLIST", toDoList);
+  }
+}
+
+
+
+
+29: ToDoDataBase db = ToDoDataBase(); adından bir db nesnesi oluştur homepagede
+ve homepagedeki List toDoList listesini sil. O listede yerine db.toDoList olarak 
+değiştirirsin
+
+
+30:HOMEPAGEDE
+
+ void initState() {
+    if (_mybox.get("TODOLIST") == null) {
+      db.createIitialData();
+    } 
+    else {
+      db.loadData();
+    }
+
+    super.initState();
+  }
+initstate oluştur. //eğerki ilk açılışsa if blok çalışır. değilse else blok çalışır
+
+
+31: son olarak db.uodateDataBase(); i HomePagede ki methodların sonuna yaz ki
+yaptığın güncellemeler kalsın.
+
